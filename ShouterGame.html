@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShooterGamea</title>
+</head>
+<body>
+  <canvas id="myCanvas" width="1300" height="755"></canvas>
+
+  <script>
+    class Sprite {
+      constructor() {}
+      update() {}
+      draw() {}
+    }
+
+    class Music extends Sprite {
+      constructor() {
+        super();
+        this.mymusic = new Audio("audio/music.mp3");
+      }
+      update() {
+        this.mymusic.play();
+      } 
+      pause() {
+        this.mymusic.pause();
+        this.mymusic.currentTime = 0;
+      }
+      draw() {}
+    }
+
+    class BossMusic extends Sprite {
+      constructor() {
+        super();
+        this.bossmusic = new Audio("audio/bossmusic.mp3");
+      }
+      update() {
+        this.bossmusic.play();
+      }
+      pause() {
+        this.bossmusic.pause();
+        this.bossmusic.currentTime = 0;
+      }
+      draw() {}
+    }
+
+    class WinMusic extends Sprite {
+      constructor() {
+        super();
+        this.winmusic = new Audio("audio/winmusic.mp3");
+      }
+      update() {
+        this.winmusic.play();
+      }
+      draw() {}
+    }
+
+    class Ded extends Sprite {
+      constructor() {
+        super();
+        this.ded = new Audio("audio/ded.mp3");
+      }
+      update() {
+        this.ded.play();
+      }
+      pause() {
+        this.ded.pause();
+        this.ded.currentTime = 0;
+      }
+      draw() {}
+    }
+
+    class Character extends Sprite {
+      constructor() {
+        super();
+        this.x = 200;
+        this.y = 200;
+        this.animation = true;
+        this.health = 100;
+        this.charge = 100;
+
+        this.spriteSheets = {
+          default: new Image(),
+          right: new Image(),
+          left: new Image(),
+          up: new Image(),
+          down: new Image(),
+        };
+
+        this.loadSpriteSheet(this.spriteSheets.default, "images/44.png");
+        this.loadSpriteSheet(this.spriteSheets.right, "images/44.png");
+        this.loadSpriteSheet(this.spriteSheets.left, "images/44.png");
+        this.loadSpriteSheet(this.spriteSheets.up, "images/44.png");
+        this.loadSpriteSheet(this.spriteSheets.down, "images/44.png");
+
+        this.currentDirection = "default";
+        this.spriteWidth = 100;
+        this.spriteHeight = 70;
+        this.numOfFrames = 1;
+        this.frameIndex = 0;
+        this.frameCounter = 0;
+        this.imageLoaded = false;
+        this.class = 0;
+
+        const spriteSheetCount = Object.keys(this.spriteSheets).length;
+        let loadedSpriteSheets = 0;
+        const onSpriteSheetLoad = () => {
+          loadedSpriteSheets++;
+          if (loadedSpriteSheets === spriteSheetCount) {
+            this.imageLoaded = true;
+          }
+        };
+
+        for (const direction in this.spriteSheets) {
+          if (this.spriteSheets.hasOwnProperty(direction)) {
+            this.spriteSheets[direction].onload = onSpriteSheetLoad;
+          }
+        }
+
+        this.bullets = [];
+      }
+
+      collidesWith(enemy) {
+        const distance = Math.sqrt((this.x - enemy.x) ** 2 + (this.y - enemy.y) ** 2);
+        return distance < this.radius + enemy.radius;
+      }
+
+      loadSpriteSheet(image, src) {
+        image.src = src;
+      }
+
+      update() {
+        if (this.animation && this.imageLoaded) {
+          this.frameCounter++;
+          if (this.frameCounter >= 5) {
+            this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+            this.frameCounter = 0;
+          }
+        }
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+          const bullet = this.bullets[i];
+          bullet.update();
+        }
+      }
+
+      setDirection(direction) {
+        this.currentDirection = direction;
+      }
+
+      shoot() {
+        if (this.charge > 10) {
+          if (this.class == 0) {
+            const bullet = new Bullet(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            this.bullets.push(bullet);
+          } else if (this.class == 1) {
+            const bulletone = new Bullet(this.x + this.spriteWidth, this.y - 10 + this.spriteHeight / 2);
+            this.bullets.push(bulletone);
+            const bullettwo = new Bullet(this.x + this.spriteWidth, this.y + 10 + this.spriteHeight / 2);
+            this.bullets.push(bullettwo);
+          } else if (this.class == 2) {
+            const bulleta = new BulletU(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            const bulletb = new BulletD(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            const bulletc = new Bullet(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            this.bullets.push(bulleta, bulletb, bulletc);
+          } else if (this.class >= 3) {
+            const bulleta = new BulletU(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            const bulletb = new BulletD(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            const bulletc = new Bullet(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+            const bulletzz = new BulletU(this.x + this.spriteWidth, this.y - 10 + this.spriteHeight / 2);
+            const bulletxx = new BulletD(this.x + this.spriteWidth, this.y + 10 + this.spriteHeight / 2);
+            this.bullets.push(bulleta, bulletb, bulletc, bulletzz, bulletxx);
+          }
+          this.charge -= 10;
+        }
+      }
+
+      shootU() {
+        if (this.charge > 10) {
+          const bullet = new BulletU(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+          this.bullets.push(bullet);
+          this.charge -= 10;
+        }
+      }
+
+      shootD() {
+        if (this.charge > 10) {
+          const bullet = new BulletD(this.x + this.spriteWidth, this.y + this.spriteHeight / 2);
+          this.bullets.push(bullet);
+          this.charge -= 10;
+        }
+      }
+
+      draw(ctx) {
+        if (this.charge <= 100) {
+          this.charge += 0.5;
+        }
+        ctx.fillStyle = "black";
+        ctx.fillRect(this.x, this.y - 15, this.spriteWidth, 5);
+        ctx.fillStyle = "blue";
+        ctx.fillRect(this.x, this.y - 15, (this.charge / 100) * this.spriteWidth, 5);
+        ctx.fillStyle = "black";
+        ctx.fillRect(this.x, this.y - 10, this.spriteWidth, 5);
+        ctx.fillStyle = "green";
+        ctx.fillRect(this.x, this.y - 10, (this.health / 100) * this.spriteWidth, 5);
+
+        if (this.animation && this.imageLoaded) {
+          ctx.drawImage(
+            this.spriteSheets[this.currentDirection],
+            this.frameIndex * this.spriteWidth,
+            0,
+            this.spriteWidth,
+            this.spriteHeight,
+            this.x,
+            this.y,
+            this.spriteWidth,
+            this.spriteHeight
+          );
+        }
+
+        for (const bullet of this.bullets) {
+          bullet.draw(ctx);
+        }
+      }
+    }
+    class SimpleEnemy extends Sprite {
+  constructor(canvasWidth, canvasHeight) {
+    super();
+    this.health = 3;
+    this.timesShot = 0;
+    this.radius = 20;
+    this.x = canvasWidth;
+    this.y = Math.floor(Math.random() * canvasHeight);
+    this.speed = 0.5;
+    this.speedy = 2;
+    this.frameIndex = 0;
+    this.numOfFrames = 1;
+    this.imageLoaded = false;
+    this.spriteSheet = new Image();
+    this.spriteSheetDamaged = new Image();
+    this.loadSpriteSheet(this.spriteSheet, "images/45.png");
+    this.loadSpriteSheet(this.spriteSheetDamaged, "images/47.png");
+    this.spriteWidth = 80;
+    this.spriteHeight = 115;
+    this.condition = true;
+
+    this.spriteSheet.onload = () => {
+      this.imageLoaded = true;
+    };
+  }
+
+  loadSpriteSheet(image, src) {
+    image.src = src;
+  }
+
+  update() {
+    this.x -= this.speed;
+    if (this.condition) {
+      this.y += this.speedy;
+      if (this.y >= 650) {
+        this.condition = false;
+      }
+    } else {
+      this.y -= this.speedy;
+      if (this.y <= 30) {
+        this.condition = true;
+      }
+    }
+
+    if (this.imageLoaded) {
+      this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+    }
+  }
+
+  draw(ctx) {
+    if (this.imageLoaded) {
+      if (this.health < 3) {
+        ctx.drawImage(
+          this.spriteSheetDamaged,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      } else {
+        ctx.drawImage(
+          this.spriteSheet,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "purple";
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+}
+
+class Blast extends Sprite {
+  constructor(x, y) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.speed = 5;
+    this.radius = 15;
+  }
+
+  update() {
+    this.x -= this.speed;
+  }
+
+  collidesWith(character) {
+    const blastCenterX = this.x;
+    const blastCenterY = this.y;
+    const characterCenterX = character.x + character.spriteWidth / 2;
+    const characterCenterY = character.y + character.spriteHeight / 2;
+
+    const distanceX = Math.abs(blastCenterX - characterCenterX);
+    const distanceY = Math.abs(blastCenterY - characterCenterY);
+
+    return (
+      distanceX < character.spriteWidth / 2 - 5 &&
+      distanceY < character.spriteHeight / 2 - 5
+    );
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+class BossEnemy extends Sprite {
+  constructor(canvasWidth, canvasHeight) {
+    super();
+    this.health = 10;
+    this.timesShot = 0;
+    this.radius = 40;
+    this.x = canvasWidth;
+    this.y = Math.floor(Math.random() * canvasHeight);
+    this.speed = 1;
+    this.speedy = 1;
+    this.frameIndex = 0;
+    this.numOfFrames = 1;
+    this.imageLoaded = false;
+    this.spriteSheet = new Image();
+    this.spriteSheetDamaged = new Image();
+    this.loadSpriteSheet(this.spriteSheet, "images/boss.png");
+    this.loadSpriteSheet(this.spriteSheetDamaged, "images/bossblast.png");
+    this.spriteWidth = 236;
+    this.spriteHeight = 205;
+    this.condition = true;
+    this.isDamaged = false;
+
+    this.spriteSheet.onload = () => {
+      this.imageLoaded = true;
+    };
+  }
+
+  loadSpriteSheet(image, src) {
+    image.src = src;
+  }
+
+  update() {
+    if (this.x >= 1200) {
+      this.x -= this.speed;
+    }
+    if (this.condition) {
+      this.y += this.speedy;
+      if (this.y >= 650) {
+        this.condition = false;
+      }
+    } else {
+      this.y -= this.speedy;
+      if (this.y <= 30) {
+        this.condition = true;
+      }
+    }
+
+    if (this.imageLoaded) {
+      this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+    }
+
+    if (Math.random() < 0.01) {
+      this.shootBlast();
+    }
+  }
+
+  draw(ctx) {
+    if (this.imageLoaded) {
+      if (this.isDamaged) {
+        ctx.drawImage(
+          this.spriteSheetDamaged,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      } else {
+        ctx.drawImage(
+          this.spriteSheet,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  shootBlast() {
+    const blast = new Blast(this.x, this.y);
+    myGame.blasts.push(blast);
+    this.isDamaged = true;
+    setTimeout(() => {
+      this.isDamaged = false;
+    }, 1000);
+  }
+}
+class Bullet extends Sprite {
+  constructor(x, y) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.speed = 8;
+    this.radius = 5;
+  }
+
+  update() {
+    this.x += this.speed;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  collidesWith(enemy) {
+    const dx = this.x - enemy.x;
+    const dy = this.y - enemy.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < this.radius + enemy.radius;
+  }
+}
+
+class BulletU extends Bullet {
+  update() {
+    this.x += this.speed;
+    this.y -= this.speed;
+  }
+}
+
+class BulletD extends Bullet {
+  update() {
+    this.x += this.speed;
+    this.y += this.speed;
+  }
+}
+
+class GIFT extends Sprite {
+  constructor(canvasWidth, canvasHeight) {
+    super();
+    this.health = 3;
+    this.timesShot = 0;
+    this.radius = 20;
+    this.x = canvasWidth;
+    this.y = Math.floor(Math.random() * canvasHeight);
+    this.speed = 5;
+    this.speedy = 8;
+    this.frameIndex = 0;
+    this.numOfFrames = 1;
+    this.imageLoaded = false;
+    this.spriteSheet = new Image();
+    this.spriteSheetDamaged = new Image();
+    this.loadSpriteSheet(this.spriteSheet, "images/4.png");
+    this.loadSpriteSheet(this.spriteSheetDamaged, "images/4.png");
+    this.spriteWidth = 25;
+    this.spriteHeight = 25;
+    this.condition = true;
+
+    this.spriteSheet.onload = () => {
+      this.imageLoaded = true;
+    };
+  }
+
+  loadSpriteSheet(image, src) {
+    image.src = src;
+  }
+
+  collidesWith(character) {
+    const centerX = this.x;
+    const centerY = this.y;
+    const characterCenterX = character.x + character.spriteWidth / 2;
+    const characterCenterY = character.y + character.spriteHeight / 2;
+
+    const distanceX = Math.abs(centerX - characterCenterX);
+    const distanceY = Math.abs(centerY - characterCenterY);
+
+    return (
+      distanceX < character.spriteWidth / 2 - 5 &&
+      distanceY < character.spriteHeight / 2 - 5
+    );
+  }
+
+  update() {
+    this.x -= this.speed;
+    if (this.condition) {
+      this.y += this.speedy;
+      if (this.y >= 650) {
+        this.condition = false;
+      }
+    } else {
+      this.y -= this.speedy;
+      if (this.y <= 30) {
+        this.condition = true;
+      }
+    }
+
+    if (this.imageLoaded) {
+      this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+    }
+  }
+
+  draw(ctx) {
+    if (this.imageLoaded) {
+      if (this.health < 3) {
+        ctx.drawImage(
+          this.spriteSheetDamaged,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      } else {
+        ctx.drawImage(
+          this.spriteSheet,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+}
+class KIT extends Sprite {
+  constructor(canvasWidth, canvasHeight) {
+    super();
+    this.health = 3;
+    this.timesShot = 0;
+    this.radius = 20;
+    this.x = canvasWidth;
+    this.y = Math.floor(Math.random() * canvasHeight);
+    this.speed = 5;
+    this.speedy = 8;
+    this.frameIndex = 0;
+    this.numOfFrames = 1;
+    this.imageLoaded = false;
+    this.spriteSheet = new Image();
+    this.spriteSheetDamaged = new Image();
+    this.loadSpriteSheet(this.spriteSheet, "images/bossbg.png");
+    this.loadSpriteSheet(this.spriteSheetDamaged, "images/bossbg.png");
+    this.spriteWidth = 25;
+    this.spriteHeight = 25;
+    this.condition = true;
+
+    this.spriteSheet.onload = () => {
+      this.imageLoaded = true;
+    };
+  }
+
+  loadSpriteSheet(image, src) {
+    image.src = src;
+  }
+
+  collidesWith(character) {
+    const centerX = this.x;
+    const centerY = this.y;
+    const characterCenterX = character.x + character.spriteWidth / 2;
+    const characterCenterY = character.y + character.spriteHeight / 2;
+
+    const distanceX = Math.abs(centerX - characterCenterX);
+    const distanceY = Math.abs(centerY - characterCenterY);
+
+    return (
+      distanceX < character.spriteWidth / 2 - 5 &&
+      distanceY < character.spriteHeight / 2 - 5
+    );
+  }
+
+  update() {
+    this.x -= this.speed;
+    if (this.condition) {
+      this.y += this.speedy;
+      if (this.y >= 650) {
+        this.condition = false;
+      }
+    } else {
+      this.y -= this.speedy;
+      if (this.y <= 30) {
+        this.condition = true;
+      }
+    }
+
+    if (this.imageLoaded) {
+      this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+    }
+  }
+
+  draw(ctx) {
+    if (this.imageLoaded) {
+      if (this.health < 3) {
+        ctx.drawImage(
+          this.spriteSheetDamaged,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      } else {
+        ctx.drawImage(
+          this.spriteSheet,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+}
+
+class BigBoss extends Sprite {
+  constructor(canvasWidth, canvasHeight) {
+    super();
+    this.health = 150;
+    this.timesShot = 0;
+    this.radius = 40;
+    this.x = 1300 / 2;
+    this.y = 755 / 2;
+    this.circularRadius = 100;
+    this.circularAngle = 0;
+    this.circularSpeed = 0.02;
+    this.oscillationAmplitude = 50;
+    this.oscillationAngle = 0;
+    this.oscillationSpeed = 0.05;
+    this.imageLoaded = false;
+    this.frameIndex = 0;
+    this.numOfFrames = 1;
+    this.isDamaged = false;
+    this.spriteSheet = new Image();
+    this.spriteSheetDamaged = new Image();
+    this.loadSpriteSheet(this.spriteSheet, "images/BIGBOSS.png");
+    this.loadSpriteSheet(this.spriteSheetDamaged, "images/BIGBOSSMAD.png");
+    this.spriteWidth = 250;
+    this.spriteHeight = 360;
+    this.condition = true;
+    this.direction = 1;
+    this.blastCooldown = 0;
+    this.win = false;
+    this.bossAudio = new Audio("audio/demonic.mp3");
+
+    this.spriteSheet.onload = () => {
+      this.imageLoaded = true;
+    };
+  }
+
+  loadSpriteSheet(image, src) {
+    image.src = src;
+  }
+
+  update() {
+    if (this.health <= 0) {
+      this.win = true;
+    }
+    if (this.health > 120) {
+      this.circularAngle += this.circularSpeed * this.direction;
+      this.oscillationAngle += this.oscillationSpeed;
+
+      this.x =
+        1300 / 2 +
+        Math.cos(this.circularAngle) * this.circularRadius +
+        Math.cos(this.oscillationAngle) * this.oscillationAmplitude;
+      this.y =
+        255 / 2 +
+        Math.sin(this.circularAngle) * this.circularRadius +
+        Math.sin(this.oscillationAngle) * this.oscillationAmplitude;
+
+      if (this.imageLoaded) {
+        this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+      }
+
+      if (this.blastCooldown <= 0) {
+        this.shootBlast();
+        this.bossAudio.play();
+        this.blastCooldown = 100;
+      } else {
+        this.blastCooldown--;
+      }
+    } else if (this.health > 85) {
+      const spinningSpeed = 2;
+      this.circularAngle += this.circularSpeed * spinningSpeed * Math.random();
+      this.oscillationAngle += this.oscillationSpeed * (Math.random() - 0.5);
+
+      this.x =
+        1300 / 2 +
+        Math.cos(this.circularAngle) * (this.circularRadius + 100) +
+        Math.cos(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+      this.y =
+        255 / 2 +
+        Math.sin(this.circularAngle) * (this.circularRadius + 100) +
+        Math.sin(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+
+      if (this.imageLoaded) {
+        this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+      }
+
+      if (Math.random() < 0.05) {
+        this.shootBlast();
+        this.bossAudio.play();
+      }
+    } else if (this.health > 70) {
+      const spinningSpeed = 2;
+      this.circularAngle += this.circularSpeed * spinningSpeed * Math.random();
+      this.oscillationAngle += this.oscillationSpeed * (Math.random() - 0.5);
+
+      this.x =
+        1300 / 2 +
+        Math.cos(this.circularAngle) * (this.circularRadius + 100) +
+        Math.cos(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+      this.y =
+        255 / 2 +
+        Math.sin(this.circularAngle) * (this.circularRadius + 100) +
+        Math.sin(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+
+      if (this.imageLoaded) {
+        this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+      }
+
+      this.shootBlast();
+      this.bossAudio.play();
+    } else {
+      const spinningSpeed = 2;
+      this.circularAngle +=
+        this.circularSpeed * spinningSpeed * Math.random() + 5;
+      this.oscillationAngle +=
+        this.oscillationSpeed * (Math.random() - 0.5) + 5;
+
+      this.x =
+        1300 / 2 +
+        Math.cos(this.circularAngle) * (this.circularRadius + 100) +
+        Math.cos(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+      this.y =
+        255 / 2 +
+        Math.sin(this.circularAngle) * (this.circularRadius + 100) +
+        Math.sin(this.oscillationAngle) * (this.oscillationAmplitude + 50);
+
+      if (this.imageLoaded) {
+        this.frameIndex = (this.frameIndex + 1) % this.numOfFrames;
+      }
+
+      if (Math.random() < 0.1) {
+        this.shootBlast();
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "black";
+    ctx.fillRect(595, 20, this.spriteWidth * 2 + 10, 25);
+    ctx.fillStyle = "orange";
+    ctx.fillRect(600, 25, this.spriteWidth * 2, 15);
+    ctx.fillStyle = "red";
+    ctx.fillRect(
+      600,
+      25,
+      (this.health / 150) * this.spriteWidth * 2,
+      15
+    );
+
+    if (this.imageLoaded) {
+      if (this.isDamaged) {
+        ctx.drawImage(
+          this.spriteSheetDamaged,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      } else {
+        ctx.drawImage(
+          this.spriteSheet,
+          this.frameIndex * this.spriteWidth,
+          0,
+          this.spriteWidth,
+          this.spriteHeight,
+          this.x - this.radius,
+          this.y - this.radius,
+          this.spriteWidth,
+          this.spriteHeight
+        );
+      }
+    } else {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  shootBlast() {
+    const blastForward = new BossBlast(
+      this.x,
+      this.y + Math.random() * 100,
+      this.direction
+    );
+    const blastBackward = new BossBlast(
+      this.x,
+      this.y + Math.random() * 100,
+      -this.direction
+    );
+
+    myGame.blasts.push(blastForward, blastBackward);
+
+    this.isDamaged = true;
+
+    setTimeout(() => {
+      this.isDamaged = false;
+    }, 1000);
+  }
+}
+class BossBlast extends Sprite {
+  constructor(x, y, direction) {
+    super();
+    this.x = x + 90;
+    this.y = y + 180;
+    this.speed = 5;
+    this.radius = 15;
+    this.direction = direction;
+  }
+
+  update() {
+    this.x -= this.speed * this.direction;
+  }
+
+  collidesWith(character) {
+    const blastCenterX = this.x;
+    const blastCenterY = this.y;
+    const characterCenterX = character.x + character.spriteWidth / 2;
+    const characterCenterY = character.y + character.spriteHeight / 2;
+
+    const distanceX = Math.abs(blastCenterX - characterCenterX);
+    const distanceY = Math.abs(blastCenterY - characterCenterY);
+
+    if (
+      distanceX < character.spriteWidth / 2 - 5 &&
+      distanceY < character.spriteHeight / 2 - 5
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+class Obstacle {
+  constructor(canvasWidth, canvasHeight) {
+    this.width = 20;
+    this.height = Math.floor(Math.random() * (canvasHeight - 100)) + 50;
+    this.x = canvasWidth;
+    this.y = Math.random() < 0.5 ? 0 : canvasHeight - this.height;
+    this.speed = 5;
+  }
+
+  update() {
+    this.x -= this.speed;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "purple";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  collidesWith(character) {
+    if (
+      this.x < character.x + character.spriteWidth &&
+      this.x + this.width > character.x &&
+      this.y < character.y + character.spriteHeight &&
+      this.y + this.height > character.y
+    ) {
+      return true;
+    }
+    return false;
+  }
+}
+
+class VObstacle {
+  constructor(canvasWidth, canvasHeight) {
+    this.width = Math.floor(Math.random() * (canvasWidth / 2)) + 50;
+    this.height = 20;
+    this.x = Math.floor(Math.random() * (canvasWidth - this.width));
+    this.y = canvasHeight;
+    this.speed = 3;
+  }
+
+  update() {
+    this.y -= this.speed;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = "purple";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  collidesWith(character) {
+    if (
+      this.x < character.x + character.spriteWidth &&
+      this.x + this.width > character.x &&
+      this.y < character.y + character.spriteHeight &&
+      this.y + this.height > character.y
+    ) {
+      return true;
+    }
+    return false;
+  }
+}
+class Game {
+  constructor() {
+    this.canvas = document.getElementById("myCanvas");
+    this.ctx = this.canvas.getContext("2d");
+
+    this.backgroundImage = new Image();
+    this.backgroundImage.src = 'images/background.jpg';
+    this.backgrounboss = new Image();
+    this.backgrounboss.src = 'images/bossbg.jpg';
+    this.backgroundspeed = 1;
+    this.backgroundy = 0;
+    this.yourImage = new Image();
+    this.yourImage.src = 'images/deadboss.png';
+    this.Youwonb = new Image();
+    this.Youwonb.src = 'images/backgroundwon.png';
+    this.sprites = [];
+    this.character = new Character();
+    this.enemies = [];
+    this.boss = [];
+    this.blasts = [];
+    this.gifts = [];
+    this.kits = [];
+    this.obstacles = [];
+    this.vobstacles = [];
+    this.music = new Music();
+    this.bossmusic = new BossMusic();
+    this.winmusic = new WinMusic();
+    this.ded = new Ded();
+
+    this.keyW = false;
+    this.keyA = false;
+    this.keyS = false;
+    this.keyD = false;
+
+    this.creditsY = this.canvas.height;
+    this.gamestart = 0;
+    this.bigbosscount = 0;
+    this.gameOver = false;
+    this.score = 0;
+    this.frameCounter = 0;
+    this.scoreIncrementInterval = 60;
+  
+    window.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+          this.keyW = true;
+          this.character.setDirection("up");
+          break;
+        case "ArrowLeft":
+          this.keyA = true;
+          this.character.setDirection("left");
+          break;
+        case "ArrowDown":
+          this.keyS = true;
+          this.character.setDirection("down");
+          break;
+        case "ArrowRight":
+          this.keyD = true;
+          this.character.setDirection("right");
+          break;
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+          this.keyW = false;
+          break;
+        case "ArrowLeft":
+          this.keyA = false;
+          break;
+        case "ArrowDown":
+          this.keyS = false;
+          break;
+        case "ArrowRight":
+          this.keyD = false;
+          break;
+      }
+    });
+
+    window.addEventListener('keydown', (event) => {
+      switch (event.key) {
+        case 'Escape':
+          this.gamestart = 0;
+          break;
+        case 'Enter':
+          if (!this.gamestart) {
+            this.gamestart = 1;
+          }
+          break;
+      }
+    });
+
+    this.animate = this.animate.bind(this);
+    this.animate();
+    this.bindShootKey();
+  }
+  checkCollisions() {
+  for (let i = this.gifts.length - 1; i >= 0; i--) {
+    const gift = this.gifts[i];
+    if (gift.collidesWith(this.character)) {
+      this.character.charge = 100;
+      this.gifts.splice(i, 1);
+    }
+  }
+
+  for (let i = this.kits.length - 1; i >= 0; i--) {
+    const kit = this.kits[i];
+    if (kit.collidesWith(this.character)) {
+      this.character.class++;
+      this.kits.splice(i, 1);
+    }
+  }
+
+  for (let i = this.enemies.length - 1; i >= 0; i--) {
+    const enemy = this.enemies[i];
+
+    if (enemy.x < 0) {
+      this.enemies.splice(i, 1);
+      continue;
+    }
+
+    if (this.character.collidesWith(enemy)) {
+      this.character.health--;
+    }
+
+    for (let j = this.character.bullets.length - 1; j >= 0; j--) {
+      const bullet = this.character.bullets[j];
+      if (bullet.collidesWith(enemy)) {
+        enemy.health--;
+        this.character.bullets.splice(j, 1);
+        if (enemy.health <= 0) {
+          this.enemies.splice(i, 1);
+          this.score++;
+          break;
+        }
+      }
+    }
+  }
+
+  for (let i = this.blasts.length - 1; i >= 0; i--) {
+    const blast = this.blasts[i];
+    if (blast.x < 0 || blast.x > 1800) {
+      this.blasts.splice(i, 1);
+    } else if (blast.collidesWith(this.character)) {
+      this.character.health--;
+    }
+  }
+
+  if (this.character.health <= 0) {
+    this.gameOver = true;
+  }
+}
+
+checkbossCollisions() {
+  for (let i = this.boss.length - 1; i >= 0; i--) {
+    const enemy = this.boss[i];
+    for (let j = this.character.bullets.length - 1; j >= 0; j--) {
+      const bullet = this.character.bullets[j];
+      if (bullet.collidesWith(enemy)) {
+        enemy.health--;
+        this.character.bullets.splice(j, 1);
+        if (enemy.health <= 0) {
+          this.boss.splice(i, 1);
+          this.score++;
+          break;
+        }
+      }
+      if (bullet.x >= 1300) {
+        this.character.bullets.splice(j, 1);
+      }
+    }
+    if (this.character.collidesWith(enemy)) {
+      this.gameOver = true;
+    }
+  }
+
+  if (this.character.health <= 0) {
+    this.gameOver = true;
+  }
+
+  for (let i = this.blasts.length - 1; i >= 0; i--) {
+    const blast = this.blasts[i];
+    if (blast.x < 0 || blast.x > 1400) {
+      this.blasts.splice(i, 1);
+    }
+  }
+}
+
+  updateBlasts() {
+    this.blasts = this.blasts.filter(blast => blast.x > 0);
+    for (const blast of this.blasts) {
+      blast.update();
+      if (blast.collidesWith(this.character)) {
+        this.character.health--;
+      }
+    }
+  }
+
+  drawBlasts() {
+    for (const blast of this.blasts) {
+      blast.draw(this.ctx);
+    }
+  }
+
+  updateCharacterPosition() {
+    if (!this.gameOver) {
+      if (this.keyW && this.character.y >= 0) {
+        this.character.y -= 5;
+      }
+      if (this.keyA && this.character.x >= 0) {
+        this.character.x -= 5;
+      }
+      if (this.keyS && this.character.y <= 705) {
+        this.character.y += 5;
+      }
+      if (this.keyD && this.character.x <= 1200) {
+        this.character.x += 5;
+      }
+    }
+  }
+
+updateEnemies() {
+  this.enemies = this.enemies.filter(enemy => !enemy.markedForRemoval);
+  for (const enemy of this.enemies) {
+    enemy.update();
+  }
+}
+
+updateGifts() {
+  this.gifts = this.gifts.filter(gift => !gift.markedForRemoval);
+  for (const gift of this.gifts) {
+    gift.update();
+  }
+}
+
+updatekits() {
+  this.kits = this.kits.filter(kit => !kit.markedForRemoval);
+  for (const kit of this.kits) {
+    kit.update();
+  }
+}
+
+updatebossEnemies() {
+  this.boss = this.boss.filter(enemy => !enemy.markedForRemoval);
+  for (const enemy of this.boss) {
+    enemy.update();
+  }
+}
+
+updateBackground() {
+  this.ctx.drawImage(this.backgroundImage, 0, this.backgroundy, 1000, 700);
+  this.ctx.drawImage(this.backgroundImage, 0, this.backgroundy - 700, 1000, 700);
+  this.backgroundy += this.backgroundspeed;
+  if (this.backgroundy >= 700) {
+    this.backgroundy = 0;
+  }
+}
+
+updatebossBackground() {
+  this.ctx.drawImage(this.backgrounboss, 0, this.backgroundy, 1000, 700);
+  this.ctx.drawImage(this.backgrounboss, 0, this.backgroundy - 700, 1000, 700);
+  this.backgroundy += this.backgroundspeed;
+  if (this.backgroundy >= 700) {
+    this.backgroundy = 0;
+  }
+}
+
+updateObstacles() {
+  this.obstacles = this.obstacles.filter(obstacle => obstacle.x > 0);
+  for (const obstacle of this.obstacles) {
+    obstacle.update();
+    if (obstacle.collidesWith(this.character)) {
+      this.character.health -= 1;
+    }
+  }
+}
+
+updateVObstacles() {
+  this.vobstacles = this.vobstacles.filter(vobstacle => vobstacle.x > 0);
+  for (const vobstacle of this.vobstacles) {
+    vobstacle.update();
+    if (vobstacle.collidesWith(this.character)) {
+      this.character.health -= 1;
+    }
+  }
+}
+
+spawnEnemy() {
+  if (Math.random() < 0.03) {
+    this.enemies.push(new BossEnemy(this.canvas.width, this.canvas.height));
+  } else if (Math.random() < 0.3) {
+    this.enemies.push(new SimpleEnemy(this.canvas.width, this.canvas.height));
+  }
+  if (Math.random() > 0.96) {
+    this.kits.push(new KIT(this.canvas.width, this.canvas.height));
+  }
+  if (Math.random() < 0.1) {
+    this.gifts.push(new GIFT(this.canvas.width, this.canvas.height));
+  }
+}
+
+spawngift() {
+  if (Math.random() < 0.1) {
+    this.gifts.push(new GIFT(this.canvas.width, this.canvas.height));
+  }
+}
+
+spawnObstacle() {
+  if (Math.random() < 0.005) {
+    this.obstacles.push(new Obstacle(this.canvas.width, this.canvas.height));
+  }
+}
+
+spawnVObstacle() {
+  if (Math.random() < 0.0025) {
+    this.vobstacles.push(new VObstacle(this.canvas.width, this.canvas.height));
+  }
+}
+
+spawnBigBoss() {
+  this.boss.push(new BigBoss(this.canvas.width, this.canvas.height));
+}
+
+drawObstacles() {
+  for (const obstacle of this.obstacles) {
+    obstacle.draw(this.ctx);
+  }
+}
+
+drawVObstacles() {
+  for (const vobstacle of this.vobstacles) {
+    vobstacle.draw(this.ctx);
+  }
+}
+draw() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+  this.backgroundy -= this.backgroundspeed;
+  if (this.backgroundy <= -1300) {
+    this.backgroundy = 0;
+  }
+
+  this.ctx.drawImage(this.backgroundImage, this.backgroundy, 0, 1300, 755);
+  this.ctx.drawImage(this.backgroundImage, this.backgroundy + 1300, 0, 1300, 755);
+
+  this.character.draw(this.ctx);
+
+  for (const enemy of this.enemies) {
+    enemy.draw(this.ctx);
+  }
+  for (const gift of this.gifts) {
+    gift.draw(this.ctx);
+  }
+  for (const kit of this.kits) {
+    kit.draw(this.ctx);
+  }
+
+  this.ctx.fillStyle = "white";
+  this.ctx.font = "24px Arial";
+  this.ctx.fillText("SCORE: " + (this.score), 20, 30);
+  this.ctx.fillText("CONTROLS:", 20, 50);
+  this.ctx.fillText("Move:  Arrow Keys", 20, 70);
+  this.ctx.fillText("Shoot:  Q, A, Z", 20, 90);
+  this.ctx.fillText("Teleport:  W, X", 20, 110);
+  this.ctx.fillText("Pause: Esc", 20, 130);
+  this.ctx.fillText("Play: Enter", 20, 150);
+}
+
+drawbossbackground() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+  this.backgroundy -= this.backgroundspeed;
+  if (this.backgroundy <= -755) {
+    this.backgroundy = 0;
+  }
+
+  this.ctx.drawImage(this.backgrounboss, 0, this.backgroundy, 1300, 755);
+  this.ctx.drawImage(this.backgrounboss, 0, this.backgroundy + 755, 1300, 755);
+
+  this.character.draw(this.ctx);
+
+  for (const boss of this.boss) {
+    boss.draw(this.ctx);
+  }
+  for (const gift of this.gifts) {
+    gift.draw(this.ctx);
+  }
+
+  this.ctx.fillStyle = "white";
+  this.ctx.font = "24px Arial";
+  this.ctx.fillText("SCORE: " + (this.score), 20, 30);
+  this.ctx.fillText("CONTROLS:", 20, 50);
+  this.ctx.fillText("Move:  Arrow Keys", 20, 70);
+  this.ctx.fillText("Shoot:  Q, A, Z", 20, 90);
+  this.ctx.fillText("Teleport:  W, X", 20, 110);
+  this.ctx.fillText("Pause: Esc", 20, 130);
+  this.ctx.fillText("Play: Enter", 20, 150);
+}
+
+bindShootKey() {
+  document.addEventListener("keydown", (event) => {
+    switch (event.key) {
+      case 'q':
+      case 'Q':
+        this.character.shoot();
+        break;
+      case 'a':
+      case 'A':
+        this.character.shootU();
+        break;
+      case 'z':
+      case 'Z':
+        this.character.shootD();
+        break;
+      case 'w':
+      case 'W':
+        if (this.character.x > 300) {
+          this.character.x -= 300;
+        }
+        break;
+      case 'x':
+      case 'X':
+        if (this.character.x < 1000) {
+          this.character.x += 300;
+        }
+        break;
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    switch (event.key) {
+      case "ArrowUp":
+        this.keyW = true;
+        this.character.setDirection("up");
+        break;
+      case "ArrowLeft":
+        this.keyA = true;
+        this.character.setDirection("left");
+        break;
+      case "ArrowDown":
+        this.keyS = true;
+        this.character.setDirection("down");
+        break;
+      case "ArrowRight":
+        this.keyD = true;
+        this.character.setDirection("right");
+        break;
+    }
+  });
+
+  window.addEventListener("keyup", (event) => {
+    switch (event.key) {
+      case "ArrowUp":
+        this.keyW = false;
+        break;
+      case "ArrowLeft":
+        this.keyA = false;
+        break;
+      case "ArrowDown":
+        this.keyS = false;
+        break;
+      case "ArrowRight":
+        this.keyD = false;
+        break;
+    }
+  });
+}
+
+animate() {
+  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  switch (this.gamestart) {
+    case 1:
+      this.updateCharacterPosition();
+      this.character.update();
+      this.updateEnemies();
+      this.updateGifts();
+      this.updatekits();
+      this.checkCollisions();
+      this.draw();
+      this.updateObstacles();
+      this.drawObstacles();
+      this.spawnObstacle();
+      this.frameCounter++;
+      this.ctx.fillStyle = "purple";
+      this.ctx.font = "40px Arial";
+      this.ctx.fillText("LEVEL 1", 200, 50);
+      this.updateBlasts();
+      this.drawBlasts();
+
+      if (Math.random() < 0.02) {
+        this.spawnEnemy();
+      }
+      this.music.update();
+
+      if (this.score >= 100) {
+        this.gamestart = 2;
+      }
+
+      if (!this.gameOver) {
+        requestAnimationFrame(this.animate);
+      } else {
+        this.ctx.drawImage(this.Youwonb, 0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "purple";
+        this.ctx.font = "70px Arial";
+        this.ctx.fillText("G a m e  O v e r", 410, 420);
+        this.ctx.font = "40px Arial";
+        this.ctx.fillText("Refresh page to replay", 470, 480);
+        this.music.pause();
+        this.ded.update();
+      }
+      break;
+
+    case 2:
+      this.updateCharacterPosition();
+      this.character.update();
+      this.updateEnemies();
+      this.updateGifts();
+      this.updatekits();
+      this.checkCollisions();
+      this.draw();
+      this.updateObstacles();
+      this.drawObstacles();
+      this.spawnObstacle();
+      this.ctx.fillStyle = "purple";
+      this.ctx.font = "40px Arial";
+      this.ctx.fillText("LEVEL 2", 200, 50);
+      this.frameCounter++;
+
+      if (!this.gameOver) {
+        requestAnimationFrame(this.animate);
+      } else {
+        this.ctx.drawImage(this.Youwonb, 0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "purple";
+        this.ctx.font = "70px Arial";
+        this.ctx.fillText("G a m e  O v e r", 410, 420);
+        this.ctx.font = "40px Arial";
+        this.ctx.fillText("Refresh page to replay", 470, 480);
+        this.music.pause();
+        this.ded.update();
+      }
+
+      this.updateBlasts();
+      this.drawBlasts();
+
+      if (Math.random() < 0.08) {
+        this.spawnEnemy();
+      }
+      this.music.update();
+
+      if (this.score >= 300) {
+        this.music.pause();
+        this.gamestart = 3;
+      }
+      break;
+      case 3:
+      this.updateCharacterPosition();
+      this.character.update();
+
+      if (this.bigbosscount == 0) {
+        this.spawnBigBoss();
+        this.bigbosscount = 1;
+      }
+
+      this.updateGifts();
+      this.updatebossEnemies();
+      this.checkCollisions();
+      this.checkbossCollisions();
+      this.drawbossbackground();
+      this.updateVObstacles();
+      this.drawVObstacles();
+      this.spawnVObstacle();
+      this.updateObstacles();
+      this.drawObstacles();
+      this.spawnObstacle();
+      this.frameCounter++;
+
+      this.ctx.fillStyle = "purple";
+      this.ctx.font = "40px Arial";
+      this.ctx.fillText("BOSS LEVEL", 200, 50);
+
+      if (!this.gameOver) {
+        requestAnimationFrame(this.animate);
+      } else {
+        this.ctx.drawImage(this.Youwonb, 0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "purple";
+        this.ctx.font = "70px Arial";
+        this.ctx.fillText("G a m e  O v e r", 410, 420);
+        this.ctx.font = "40px Arial";
+        this.ctx.fillText("Refresh page to replay", 470, 480);
+        this.music.pause();
+        this.ded.update();
+      }
+
+      this.updateBlasts();
+      this.drawBlasts();
+
+      if (Math.random() < 0.02) {
+        this.spawngift();
+      }
+
+      this.bossmusic.update();
+
+      if (this.boss.length > 0 && this.boss[0].health < 1) {
+        this.bossmusic.pause();
+        this.gamestart = 4;
+      }
+      break;
+
+    case 4:
+      requestAnimationFrame(this.animate);
+      this.winmusic.update();
+
+      this.ctx.fillStyle = "purple";
+      this.ctx.font = "80px Arial";
+      this.ctx.drawImage(this.Youwonb, 0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.fillText("Y O U   W O N", 390, this.creditsY);
+      this.ctx.font = "60px Arial";
+      this.ctx.drawImage(this.yourImage, 370, this.creditsY - 200, 600, 880);
+
+      this.ctx.fillText("C R E D I T S", 390, this.creditsY + 780);
+      this.ctx.font = "40px Arial";
+      this.ctx.fillText("Game Design: Sondos Halawani", 390, this.creditsY + 850);
+      this.ctx.fillText("Programming: Sondos Halawani", 390, this.creditsY + 900);
+      this.ctx.fillText("Artwork: Sondos Halawani", 390, this.creditsY + 950);
+      this.ctx.fillText("Music: Sondos Halawani", 390, this.creditsY + 1000);
+      this.ctx.fillText("THANK YOU FOR PLAYING!", 390, this.creditsY + 1400);
+      this.ctx.fillText("Special thanks ", 390, this.creditsY + 2400);
+      this.ctx.fillText("------------------", 390, this.creditsY + 2420);
+      this.ctx.fillText("Saige Fuentes", 390, this.creditsY + 2600);
+      this.ctx.fillText("actor", 390, this.creditsY + 2650);
+      this.ctx.fillText("Bowen Higgins", 390, this.creditsY + 2750);
+      this.ctx.fillText("Sound actor", 390, this.creditsY + 2800);
+      this.ctx.fillText("Leighton Kramer", 390, this.creditsY + 2900);
+      this.ctx.fillText("character designer", 390, this.creditsY + 2950);
+      this.ctx.fillText("Amelie Griffith", 390, this.creditsY + 3050);
+      this.ctx.fillText("3d artist", 390, this.creditsY + 3100);
+      this.ctx.fillText("Jaylen Blackwell", 390, this.creditsY + 3200);
+      this.ctx.fillText("game engine developer", 390, this.creditsY + 3250);
+      this.ctx.fillText("Donald trump", 390, this.creditsY + 3350);
+      this.ctx.fillText("project funder", 390, this.creditsY + 3400);
+      this.ctx.fillText("Andrew Tate", 390, this.creditsY + 3500);
+      this.ctx.fillText("Top G", 390, this.creditsY + 3550);
+
+      this.creditsY -= 2;
+      break;
+
+    case 0:
+      this.draw();
+      requestAnimationFrame(this.animate);
+
+      this.ctx.fillStyle = "purple";
+      this.ctx.font = "100px Arial";
+      this.ctx.fillText("Shooter Game", 370, 200);
+      this.ctx.fillText("Press Enter to Play", 370, 445);
+      break;
+  }
+}
+}
+
+var myGame = new Game();
+</script>
+</body>
+</html>
