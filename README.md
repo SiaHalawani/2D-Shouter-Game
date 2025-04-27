@@ -49,7 +49,7 @@ This game features:
 │   ├── images/
 │   └── sounds/
 └── README.md
-
+```
 ---
 
 ## Main Components
