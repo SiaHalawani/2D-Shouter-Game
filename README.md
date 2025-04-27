@@ -49,8 +49,6 @@ This game features:
 │   ├── images/
 │   └── sounds/
 └── README.md
-```
-*Note: For better project organization, it is recommended to group assets inside an `assets/` folder.*
 
 ---
 
