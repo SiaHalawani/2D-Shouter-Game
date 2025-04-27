@@ -1,7 +1,7 @@
-# ShooterGamea
+# ShooterGame
 
 ## Overview
-**ShooterGamea** is a 2D side-scrolling shooting game developed purely with HTML5, Canvas API, and JavaScript. The player controls a dynamic character, fights waves of enemies, navigates through obstacles, collects upgrades, and battles increasingly challenging bosses.
+**ShooterGame** is a 2D side-scrolling shooting game developed purely with HTML5, Canvas API, and JavaScript. The player controls a dynamic character, fights waves of enemies, navigates through obstacles, collects upgrades, and battles increasingly challenging bosses.
 
 This game features:
 - Responsive character movement and shooting.
